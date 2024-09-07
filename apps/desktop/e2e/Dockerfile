@@ -16,36 +16,36 @@ FROM ubuntu:24.04
 
 RUN apt update && \
   apt install -y \
-    build-essential \
-    curl \
-    git \
-    pkg-config \
-    psmisc \
-    vim && \
-    # Clean up
-    apt -y autoremove && apt -y clean
+  build-essential \
+  curl \
+  git \
+  pkg-config \
+  psmisc \
+  vim && \
+  # Clean up
+  apt -y autoremove && apt -y clean
 
 # Install Tauri dependencies
 # https://v2.tauri.app/start/prerequisites/#linux
 RUN apt install -y \
-    libwebkit2gtk-4.1-dev \
-    build-essential \
-    curl \
-    wget \
-    libssl-dev \
-    libgtk-3-dev \
-    libayatana-appindicator3-dev \
-    librsvg2-dev && \
-    # Clean up
-    apt -y autoremove && apt -y clean
+  libwebkit2gtk-4.1-dev \
+  build-essential \
+  curl \
+  wget \
+  libssl-dev \
+  libgtk-3-dev \
+  libayatana-appindicator3-dev \
+  librsvg2-dev && \
+  # Clean up
+  apt -y autoremove && apt -y clean
 
 # Install tauri-driver dependencies
 RUN apt install -y \
-    dbus-x11 \
-    webkit2gtk-driver \
-    xvfb && \
-    # Clean up
-    apt -y autoremove && apt -y clean
+  dbus-x11 \
+  webkit2gtk-driver \
+  xvfb && \
+  # Clean up
+  apt -y autoremove && apt -y clean
 
 # Install ssh server for X11 forwarding
 RUN apt install -y openssh-server && \
