@@ -21,7 +21,10 @@ RUN apt update && \
   git \
   pkg-config \
   psmisc \
-  vim && \
+  vim \
+  # Required for release builds
+  jq  \
+  file && \
   # Clean up
   apt -y autoremove && apt -y clean
 
