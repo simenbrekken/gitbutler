@@ -17,7 +17,7 @@ import { LineManagerFactory } from '@gitbutler/ui/commitLines/lineManager';
 import { LineManagerFactory as StackingLineManagerFactory } from '@gitbutler/ui/commitLinesStacking/lineManager';
 import lscache from 'lscache';
 import type { LayoutLoad } from './$types';
-import { PUBLIC_API_BASE_URL } from '$env/static/public';
+// import { PUBLIC_API_BASE_URL } from '$env/static/public';
 
 // call on startup so we don't accumulate old items
 lscache.flushExpired();
@@ -37,7 +37,7 @@ export const load: LayoutLoad = async () => {
 	const commandService = new CommandService();
 
 	const tokenMemoryService = new TokenMemoryService();
-	const httpClient = new HttpClient(window.fetch, PUBLIC_API_BASE_URL, tokenMemoryService.token);
+	const httpClient = new HttpClient(window.fetch, /* PUBLIC_API_BASE_URL */"http://localhost:3000", tokenMemoryService.token);
 	const authService = new AuthService();
 	const updaterService = new UpdaterService(new Tauri());
 	const promptService = new PromptService();
