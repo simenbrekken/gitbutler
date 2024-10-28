@@ -148,6 +148,8 @@ export function dropzone(node: HTMLElement, configuration: DropzoneConfiguration
 	function setup(configuration: DropzoneConfiguration) {
 		if (configuration.disabled) return;
 
+		// Not finding in the registry because the args (series/currentSeries) are
+		// different each time, so its
 		if (dropzoneRegistry.has(node)) {
 			clean();
 		}
@@ -155,6 +157,8 @@ export function dropzone(node: HTMLElement, configuration: DropzoneConfiguration
 		dropzoneRegistry.set(node, new Dropzone(configuration, node));
 	}
 
+	// TODO: Not being cleaned up properly; event listeners stack up
+	// and onDrop is called multiple times, for exmaple.
 	function clean() {
 		dropzoneRegistry.get(node)?.unregister();
 		dropzoneRegistry.delete(node);
