@@ -29,7 +29,7 @@ export class StackingReorderDropzone {
 			this.commitId
 		);
 
-		console.log('onDrop.stackOrder', { stackOrder });
+		console.log('onDrop.stackOrder.series', { series: stackOrder });
 		if (stackOrder) {
 			this.branchController.reorderStackCommit(data.branchId, { series: stackOrder });
 		}
@@ -58,10 +58,11 @@ export class StackingReorderDropzone {
 		// Move actorCommitId after targetCommitId in stackOrderCurrentSeries.commitIds
 		if (stackOrderCurrentSeries) {
 			// Remove from old position
-			stackOrderCurrentSeries?.commitIds.splice(
-				stackOrderCurrentSeries?.commitIds.indexOf(actorCommitId),
-				1
-			);
+			allSeriesCommits.forEach((s) => {
+				if (s.commitIds.includes(actorCommitId)) {
+					s.commitIds.splice(s.commitIds.indexOf(actorCommitId), 1);
+				}
+			});
 
 			if (targetCommitId === 'top') {
 				// Insert targetCommitId on top
@@ -74,8 +75,6 @@ export class StackingReorderDropzone {
 					actorCommitId
 				);
 			}
-
-			console.log('calculateStackOrder', { stackOrderCurrentSeries });
 
 			// Replace current series in `allSeries` list with our new series
 			allSeriesCommits.splice(
