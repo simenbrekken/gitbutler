@@ -1,6 +1,6 @@
 import { DraggableCommit } from '$lib/dragging/draggables';
 import type { BranchController } from '$lib/vbranches/branchController';
-import type { VirtualBranch, DetailedCommit, PatchSeries } from '$lib/vbranches/types';
+import type { VirtualBranch, PatchSeries } from '$lib/vbranches/types';
 
 // Exported for type access only
 export class StackingReorderDropzone {
@@ -9,11 +9,9 @@ export class StackingReorderDropzone {
 		private currentSeries: PatchSeries,
 		private series: PatchSeries[],
 		private commitId: string
-		// private entry: Entry
 	) {}
 
 	accepts(data: any) {
-		// console.log('accepts', { data, this: { series: this.currentSeries, commitId: this.commitId } });
 		if (!(data instanceof DraggableCommit)) return false;
 		// if (this.entry.distanceToOtherCommit(data.commit.id) === 0) return false;
 
@@ -21,15 +19,9 @@ export class StackingReorderDropzone {
 	}
 
 	onDrop(data: any) {
-		// console.log('onDrop.data', data);
-		// console.log('onDrop.args', {
-		// 	series: this.series,
-		// 	currentSeries: this.currentSeries,
-		// 	dataCommitId: data.commit.id,
-		// 	commitId: this.commitId
-		// });
 		if (!(data instanceof DraggableCommit)) return;
 		// if (data.branchId !== this.branch.id) return;
+
 		const stackOrder = this.calculateStackOrder(
 			this.series,
 			this.currentSeries,
@@ -38,7 +30,6 @@ export class StackingReorderDropzone {
 		);
 
 		console.log('onDrop.stackOrder', { stackOrder });
-		// const offset = this.entry.distanceToOtherCommit(data.commit.id);
 		if (stackOrder) {
 			this.branchController.reorderStackCommit(data.branchId, { series: stackOrder });
 		}
@@ -55,7 +46,7 @@ export class StackingReorderDropzone {
 			commitIds: s.patches.flatMap((p) => p.id)
 		}));
 		const flatCommits = allSeriesCommits.flatMap((s) => s.commitIds);
-		console.log({ targetCommitId, actorCommitId });
+
 		if (
 			targetCommitId !== 'top' &&
 			(!flatCommits.includes(actorCommitId) || !flatCommits.includes(targetCommitId))
@@ -73,7 +64,7 @@ export class StackingReorderDropzone {
 			);
 
 			if (targetCommitId === 'top') {
-				// insert  at top
+				// Insert targetCommitId on top
 				stackOrderCurrentSeries?.commitIds.unshift(actorCommitId);
 			} else {
 				// Insert at new position
@@ -86,7 +77,7 @@ export class StackingReorderDropzone {
 
 			console.log('calculateStackOrder', { stackOrderCurrentSeries });
 
-			// replace current series in `allSeries` with stackOrderCurrentSeries, based on their .name  key
+			// Replace current series in `allSeries` list with our new series
 			allSeriesCommits.splice(
 				allSeriesCommits.findIndex((s) => s.name === currentSeries.name),
 				1,
@@ -99,28 +90,24 @@ export class StackingReorderDropzone {
 }
 
 export class StackingReorderDropzoneManager {
-	// private indexer: Indexer;
 	public series: Map<string, PatchSeries>;
 
 	constructor(
 		private branchController: BranchController,
 		private branch: VirtualBranch
 	) {
-		// this.indexer = new Indexer(branch.series);
 		const seriesMap = new Map();
 		this.branch.series.forEach((series) => {
 			seriesMap.set(series.name, series);
 		});
-		// console.log('StackingReorderDropzoneManager.seriesMap', seriesMap);
 		this.series = seriesMap;
 	}
 
 	topDropzone(seriesName: string) {
-		// const entry = this.indexer.get('top');
 		const currentSeries = this.series.get(seriesName);
-		// if (!currentSeries) {
-		// 	throw new Error('Series not found');
-		// }
+		if (!currentSeries) {
+			throw new Error('Series not found');
+		}
 
 		return new StackingReorderDropzone(
 			this.branchController,
@@ -131,11 +118,10 @@ export class StackingReorderDropzoneManager {
 	}
 
 	dropzoneBelowCommit(seriesName: string, commitId: string) {
-		// const entry = this.indexer.get(commitId);
 		const currentSeries = this.series.get(seriesName);
-		// if (!currentSeries) {
-		// 	throw new Error('Series not found');
-		// }
+		if (!currentSeries) {
+			throw new Error('Series not found');
+		}
 
 		return new StackingReorderDropzone(
 			this.branchController,

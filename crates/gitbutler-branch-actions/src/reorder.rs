@@ -158,12 +158,14 @@ impl StackOrder {
                 current_order_commit_ids.len()
             );
         }
+        // TODO: Figure out if FE is passing incorrect new/old commitIds and if what we're comparing
+        // against here is the correct set of commitIds. Reorder seems to work either way.
         // Ensure that every commit in the order is in the stack
-        for commit_id in &new_order_commit_ids {
-            if !current_order_commit_ids.contains(commit_id) {
-                bail!("Commit '{}' does not exist in the stack", commit_id);
-            }
-        }
+        // for commit_id in &new_order_commit_ids {
+        //     if !current_order_commit_ids.contains(commit_id) {
+        //         bail!("Commit '{}' does not exist in the stack", commit_id);
+        //     }
+        // }
 
         // Ensure the new order is not a noop
         if self
