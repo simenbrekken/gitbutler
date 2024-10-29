@@ -1,8 +1,7 @@
 import { DraggableCommit } from '$lib/dragging/draggables';
 import type { BranchController } from '$lib/vbranches/branchController';
-import type { VirtualBranch, PatchSeries } from '$lib/vbranches/types';
+import type { VirtualBranch, PatchSeries, StackOrder } from '$lib/vbranches/types';
 
-// Exported for type access only
 export class StackingReorderDropzone {
 	constructor(
 		private branchId: string,
@@ -31,9 +30,9 @@ export class StackingReorderDropzone {
 			this.commitId
 		);
 
-		console.log('onDrop.stackOrder.series', { series: stackOrder });
+		// console.log('onDrop.stackOrder.series', { series: stackOrder });
 		if (stackOrder) {
-			this.branchController.reorderStackCommit(data.branchId, { series: stackOrder });
+			this.branchController.reorderStackCommit(data.branchId, stackOrder);
 		}
 	}
 }
@@ -96,11 +95,12 @@ function getTargetStackOrder(
 	currentSeries: PatchSeries,
 	actorCommitId: string,
 	targetCommitId: string
-) {
-	const allSeriesCommits = allSeries.flatMap((s) => ({
+): StackOrder | undefined {
+	const allSeriesCommits = allSeries.map((s) => ({
 		name: s.name,
-		commitIds: s.patches.flatMap((p) => p.id)
+		commitIds: s.patches.map((p) => p.id)
 	}));
+
 	const flatCommits = allSeriesCommits.flatMap((s) => s.commitIds);
 
 	if (
@@ -110,38 +110,30 @@ function getTargetStackOrder(
 		throw new Error('Commit not found in series');
 	}
 
-	const stackOrderCurrentSeries = allSeriesCommits.find((s) => s.name === currentSeries.name);
+	const currentSeriesIndex = allSeriesCommits.findIndex((s) => s.name === currentSeries.name);
+	if (currentSeriesIndex === -1) return undefined;
 
-	// Move actorCommitId after targetCommitId in stackOrderCurrentSeries.commitIds
-	if (stackOrderCurrentSeries) {
-		// Remove from old position
-		allSeriesCommits.forEach((s) => {
-			if (s.commitIds.includes(actorCommitId)) {
-				s.commitIds.splice(s.commitIds.indexOf(actorCommitId), 1);
-			}
-		});
+	// Remove actorCommitId from its current position
+	allSeriesCommits.forEach((s) => {
+		s.commitIds = s.commitIds.filter((id) => id !== actorCommitId);
+	});
 
-		if (targetCommitId === 'top') {
-			// Insert targetCommitId on top
-			stackOrderCurrentSeries?.commitIds.unshift(actorCommitId);
-		} else {
-			// Insert at new position
-			stackOrderCurrentSeries?.commitIds.splice(
-				stackOrderCurrentSeries?.commitIds.indexOf(targetCommitId) + 1,
-				0,
-				actorCommitId
-			);
-		}
+	const updatedCurrentSeries = allSeriesCommits[currentSeriesIndex];
+	if (!updatedCurrentSeries) return undefined;
 
-		// Replace current series in `allSeries` list with our new series
-		allSeriesCommits.splice(
-			allSeriesCommits.findIndex((s) => s.name === currentSeries.name),
-			1,
-			stackOrderCurrentSeries
-		);
-
-		return allSeriesCommits;
+	// Put actorCommtId in its new position
+	if (targetCommitId === 'top') {
+		updatedCurrentSeries.commitIds.unshift(actorCommitId);
+	} else {
+		const targetIndex = updatedCurrentSeries.commitIds.indexOf(targetCommitId);
+		updatedCurrentSeries.commitIds.splice(targetIndex + 1, 0, actorCommitId);
 	}
+
+	allSeriesCommits[currentSeriesIndex] = updatedCurrentSeries;
+
+	return {
+		series: allSeriesCommits
+	};
 }
 
 function distanceBetweenCommits(
@@ -150,13 +142,20 @@ function distanceBetweenCommits(
 	targetCommitId: string
 ) {
 	const allSeriesCommitsFlat = allSeries.flatMap((s) => s.patches.flatMap((p) => p.id));
-	// console.log('allSeries', { allSeriesCommitsFlat, actorCommitId, targetCommitId });
-	// if (
-	// 	!allSeriesCommitsFlat.includes(actorCommitId) ||
-	// 	!allSeriesCommitsFlat.includes(targetCommitId)
-	// ) {
-	// 	throw new Error('Commits not found in series');
-	// }
+
+	if (
+		targetCommitId !== 'top' &&
+		(!allSeriesCommitsFlat.includes(actorCommitId) ||
+			!allSeriesCommitsFlat.includes(targetCommitId))
+	) {
+		// TODO: Edge-case regarding actorCommitId being old and series being post-rebase list of commits
+		// console.log({
+		// 	allSeriesCommitsFlat,
+		// 	actor: { includes: allSeriesCommitsFlat.includes(actorCommitId), actorCommitId },
+		// 	target: { includes: allSeriesCommitsFlat.includes(targetCommitId), targetCommitId }
+		// });
+		return 0;
+	}
 
 	const actorIndex = allSeriesCommitsFlat.indexOf(actorCommitId);
 	const targetIndex = allSeriesCommitsFlat.indexOf(targetCommitId);

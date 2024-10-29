@@ -52,7 +52,7 @@
 		LocalAndRemote: 'local-and-remote-spacer'
 	};
 
-	// TODO: Refactor out lineManager; unnecessary in stacking context
+	// TODO: Refactor out lineManager; probably unnecessary in stacking context
 	const lineManager = $derived(
 		lineManagerFactory.build({
 			remoteCommits: remoteOnlyPatches,
