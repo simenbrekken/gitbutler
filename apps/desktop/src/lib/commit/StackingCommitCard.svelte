@@ -100,7 +100,7 @@
 			console.error('Unable to undo commit');
 			return;
 		}
-		branchController.undoCommit(branch.id, commit.id);
+		branchController.undoCommit(branch.id, branch.name, commit.id);
 	}
 
 	let isUndoable = commit instanceof DetailedCommit && type !== 'remote';
