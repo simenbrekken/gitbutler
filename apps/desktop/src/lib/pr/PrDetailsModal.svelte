@@ -238,7 +238,7 @@
 			directive: aiDescriptionDirective,
 			commitMessages: commits.map((c) => c.description),
 			prBodyTemplate: pullRequestTemplateBody,
-			onToken: async (t) => {
+			onToken: (t) => {
 				if (firstToken) {
 					inputBody = '';
 					firstToken = false;
