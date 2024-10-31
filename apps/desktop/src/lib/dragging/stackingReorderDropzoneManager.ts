@@ -8,20 +8,32 @@ export class StackingReorderDropzone {
 		private branchController: BranchController,
 		private currentSeries: PatchSeries,
 		private series: PatchSeries[],
-		private commitId: string
+		public commitId: string
 	) {}
 
 	accepts(data: any) {
 		if (!(data instanceof DraggableCommit)) return false;
 		if (data.branchId !== this.branchId) return false;
-		if (distanceBetweenCommits(this.series, data.commit.id, this.commitId) === 0) return false;
+		if (
+			this.commitId !== 'top' &&
+			distanceBetweenCommits(this.series, data.commit.id, this.commitId) === 0
+		)
+			return false;
 
 		return true;
 	}
 
 	onDrop(data: any) {
+		const allSeriesCommits = this.series.map((s) => ({
+			name: s.name,
+			commitIds: s.patches.map((p) => p.id)
+		}));
+
+		const flatCommits = allSeriesCommits.flatMap((s) => s.commitIds);
+
 		if (!(data instanceof DraggableCommit)) return;
 		if (data.branchId !== this.branchId) return;
+		if (!flatCommits.find((p) => p === data.commit.id)) return;
 
 		const stackOrder = getTargetStackOrder(
 			this.series,
@@ -30,7 +42,6 @@ export class StackingReorderDropzone {
 			this.commitId
 		);
 
-		// console.log('onDrop.stackOrder.series', { series: stackOrder });
 		if (stackOrder) {
 			this.branchController.reorderStackCommit(data.branchId, stackOrder);
 		}
@@ -68,6 +79,7 @@ export class StackingReorderDropzoneManager {
 
 	dropzoneBelowCommit(seriesName: string, commitId: string) {
 		const currentSeries = this.series.get(seriesName);
+
 		if (!currentSeries) {
 			throw new Error('Series not found');
 		}
@@ -148,16 +160,11 @@ function distanceBetweenCommits(
 		(!allSeriesCommitsFlat.includes(actorCommitId) ||
 			!allSeriesCommitsFlat.includes(targetCommitId))
 	) {
-		// TODO: Edge-case regarding actorCommitId being old and series being post-rebase list of commits
-		// console.log({
-		// 	allSeriesCommitsFlat,
-		// 	actor: { includes: allSeriesCommitsFlat.includes(actorCommitId), actorCommitId },
-		// 	target: { includes: allSeriesCommitsFlat.includes(targetCommitId), targetCommitId }
-		// });
 		return 0;
 	}
 
 	const actorIndex = allSeriesCommitsFlat.indexOf(actorCommitId);
 	const targetIndex = allSeriesCommitsFlat.indexOf(targetCommitId);
+
 	return actorIndex - targetIndex;
 }
