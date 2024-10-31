@@ -1,5 +1,5 @@
 import { AzureBranch } from './azureBranch';
-import type { ForgeType } from '$lib/backend/forge';
+import type { ForgeName } from '$lib/backend/forge';
 import type { RepoInfo } from '$lib/url/gitUrl';
 import type { Forge } from '../interface/forge';
 import type { ForgeArguments } from '../interface/types';
@@ -13,7 +13,7 @@ export const AZURE_DOMAIN = 'dev.azure.com';
  * https://github.com/gitbutlerapp/gitbutler/issues/2651
  */
 export class AzureDevOps implements Forge {
-	readonly type: ForgeType = 'azure';
+	readonly name: ForgeName = 'azure';
 	private baseUrl: string;
 	private repo: RepoInfo;
 	private baseBranch: string;

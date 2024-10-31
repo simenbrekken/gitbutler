@@ -11,6 +11,7 @@
 	import PrTemplateSection from './PrTemplateSection.svelte';
 	import { getPreferredPRAction, PRAction } from './pr';
 	import { AIService } from '$lib/ai/service';
+	import { ForgeService } from '$lib/backend/forge';
 	import { Project } from '$lib/backend/projects';
 	import { BaseBranch } from '$lib/baseBranch/baseBranch';
 	import Markdown from '$lib/components/Markdown.svelte';
@@ -32,12 +33,13 @@
 	import { BranchController } from '$lib/vbranches/branchController';
 	import { PatchSeries, VirtualBranch } from '$lib/vbranches/types';
 	import { getContext, getContextStore } from '@gitbutler/shared/context';
+	import { persisted } from '@gitbutler/shared/persisted';
 	import Button from '@gitbutler/ui/Button.svelte';
 	import Modal from '@gitbutler/ui/Modal.svelte';
 	import Textarea from '@gitbutler/ui/Textarea.svelte';
 	import Textbox from '@gitbutler/ui/Textbox.svelte';
 	import ToggleButton from '@gitbutler/ui/ToggleButton.svelte';
-	import { tick } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import type { DetailedPullRequest, PullRequest } from '$lib/forge/interface/types';
 
 	interface BaseProps {
@@ -71,6 +73,7 @@
 	const aiService = getContext(AIService);
 	const aiGenEnabled = projectAiGenEnabled(project.id);
 	const forge = getForge();
+	const forgeService = getContext(ForgeService);
 	const preferredPRAction = getPreferredPRAction();
 
 	const branch = $derived($branchStore);
@@ -100,9 +103,10 @@
 	let pushBeforeCreate = $state(false);
 
 	async function handleToggleUseTemplate() {
-		if (!templateSelector) return;
-		const displaying = templateSelector.imports.showing;
-		await templateSelector.setUsePullRequestTemplate(!displaying);
+		useTemplate.set(!$useTemplate);
+		if (!$useTemplate) {
+			pullRequestTemplateBody = undefined;
+		}
 	}
 
 	const canUseAI = $derived.by(() => {
@@ -145,6 +149,11 @@
 			aiService.validateConfiguration().then((valid) => {
 				aiConfigurationValid = valid;
 			});
+			if ($forge) {
+				forgeService.getAvailableReviewTemplates($forge.name).then((templates) => {
+					availableTemplates = templates;
+				});
+			}
 		}
 	});
 
@@ -325,6 +334,8 @@
 	};
 
 	const isDisplay = props.type === 'display';
+	let useTemplate = persisted(false, `use-template-${project.id}`);
+	let availableTemplates = $state<string[]>([]);
 </script>
 
 <Modal bind:this={modal} width={580} noPadding {onClose} onKeyDown={handleModalKeydown}>
@@ -363,9 +374,9 @@
 						<ToggleButton
 							icon="doc"
 							label="Use PR template"
-							checked={!!templateSelector?.imports.showing}
+							checked={$useTemplate}
 							onclick={handleToggleUseTemplate}
-							disabled={!templateSelector?.imports.hasTemplates}
+							disabled={availableTemplates.length === 0}
 						/>
 						<ToggleButton
 							icon="ai-small"
@@ -380,7 +391,13 @@
 					</div>
 
 					<!-- PR TEMPLATE SELECT -->
-					<PrTemplateSection bind:this={templateSelector} bind:pullRequestTemplateBody />
+					{#if $useTemplate}
+						<PrTemplateSection
+							bind:this={templateSelector}
+							onselected={(body) => (pullRequestTemplateBody = body)}
+							{availableTemplates}
+						/>
+					{/if}
 
 					<!-- DESCRIPTION FIELD -->
 					<div class="pr-description-field text-input">

@@ -4,7 +4,7 @@ import { GitHubListingService } from './githubListingService';
 import { GitHubPrService } from './githubPrService';
 import { GitHubIssueService } from '$lib/forge/github/issueService';
 import { Octokit } from '@octokit/rest';
-import type { ForgeType } from '$lib/backend/forge';
+import type { ForgeName } from '$lib/backend/forge';
 import type { ProjectMetrics } from '$lib/metrics/projectMetrics';
 import type { RepoInfo } from '$lib/url/gitUrl';
 import type { Forge } from '../interface/forge';
@@ -13,7 +13,7 @@ import type { ForgeArguments } from '../interface/types';
 export const GITHUB_DOMAIN = 'github.com';
 
 export class GitHub implements Forge {
-	readonly type: ForgeType = 'github';
+	readonly name: ForgeName = 'github';
 	private baseUrl: string;
 	private repo: RepoInfo;
 	private baseBranch: string;

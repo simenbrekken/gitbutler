@@ -140,11 +140,7 @@
 			repoInfo && baseBranchName
 				? forgeFactory.build(repoInfo, baseBranchName, forkInfo)
 				: undefined;
-
 		const ghListService = forge?.listService();
-
-		if (forge) projectsService.setForgeType(project, forge.type);
-
 		listServiceStore.set(ghListService);
 		forgeStore.set(forge);
 	});
